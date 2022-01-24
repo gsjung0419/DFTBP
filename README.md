@@ -57,7 +57,7 @@ Until that, you can check the details of changes in https://github.com/gsjung041
  
  -. Edit Makefile.lammps.mpi in lib/dftbp, "location of library" you set in DFTB+ installation (ex., ~/applic/lib/dftbplus).
  
- -. Move DFTBP into your lammps/src folder
+ -. Move src as lammps/src/DFTBP 
  
  !! Make sure your dftbplus.h is the same as provided from dftbplus (there might be updates for API functions).
  
