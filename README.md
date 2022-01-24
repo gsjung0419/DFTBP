@@ -1,11 +1,12 @@
 # DFTBP
 LAMMPS codes for DFTB+
+
 Reference: Jung, Gang Seob, Stephan Irle, and Bobby Sumpter. "Dynamic aspects of graphene deformation and fracture from approximate density functional theory." Carbon (2022)
 
 Please check DFTB+ code https://github.com/dftbplus/dftbplus
 
 This package provides a fix dftbp command which is a wrapper on the DFTB+ DFTB code, so that molecular dynamics can be run with LAMMPS
-using density-functional tight-binding quantum forces calculated by DFTB+.
+using density-functional tight-binding calculations by DFTB+.
 
 GS JUNG@ORNL made this package based on fix_latte.cpp and fix_latte.h (developed by LANL)
 
@@ -32,14 +33,14 @@ Until that, you can check the details of changes in https://github.com/gsjung041
  
  -. WITH_DFTD3: TRUE or FALSE
  
- -. WITH_API: TRUE (Mandatory for static library, e.g., lirbary.a)
+ -. WITH_API: TRUE (Mandatory for static library, e.g., library.a)
  
- -. BUILD_SHARED_LIBS: TURE (Mandatory for shared library, e.g., lirbary.so, mandatory for python-based lammps users)
+ -. BUILD_SHARED_LIBS: TURE (Mandatory for shared library, e.g., library.so, mandatory for python-based lammps users)
  
  -. You may have compile issues if you try with other environments.
 
 
-2-1. Installation of DFTB+ (recommended for the most fundamental version)
+2.1. Installation of DFTB+ (recommended for the most fundamental version)
 
  -. Compile the dftb+ (WITH_OMP, WITH_API: TRUE)
  
@@ -75,13 +76,13 @@ Until that, you can check the details of changes in https://github.com/gsjung041
  !! Without specified the OMP number, DFTB+ tries to use all available cores, making it slow.
  
 
- 1.1 Graphene md (example C-C.skf is MIO)
+ 3.1 Graphene md (example C-C.skf is MIO)
  
   -. data file for lammps and dftb+ should be prepared separately.
   
   -. The order of input atoms should be matched.
   
-  -. Check dftb_in.hsd for options for dftb+. Most options except force calculations, 
+  -. Check dftb_in.hsd for options for dftb+. Most options are turned off except force calculations
   
 
 
