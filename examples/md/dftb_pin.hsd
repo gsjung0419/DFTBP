@@ -1,0 +1,121 @@
+Geometry = GenFormat {
+24 S
+C
+1   1   0.0000000000E+00   7.1000000000E-01   0.0000000000E+00
+2   1   1.2297560734E+00   1.4200000000E+00   0.0000000000E+00
+3   1   1.2297560734E+00   2.8400000000E+00   0.0000000000E+00
+4   1   0.0000000000E+00   3.5500000000E+00   0.0000000000E+00
+5   1   0.0000000000E+00   4.9700000000E+00   0.0000000000E+00
+6   1   1.2297560734E+00   5.6800000000E+00   0.0000000000E+00
+7   1   1.2297560734E+00   7.1000000000E+00   0.0000000000E+00
+8   1   0.0000000000E+00   7.8100000000E+00   0.0000000000E+00
+9   1   2.4595121467E+00   7.1000000000E-01   0.0000000000E+00
+10   1   3.6892682201E+00   1.4200000000E+00   0.0000000000E+00
+11   1   3.6892682201E+00   2.8400000000E+00   0.0000000000E+00
+12   1   2.4595121467E+00   3.5500000000E+00   0.0000000000E+00
+13   1   2.4595121467E+00   4.9700000000E+00   0.0000000000E+00
+14   1   3.6892682201E+00   5.6800000000E+00   0.0000000000E+00
+15   1   3.6892682201E+00   7.1000000000E+00   0.0000000000E+00
+16   1   2.4595121467E+00   7.8100000000E+00   0.0000000000E+00
+17   1   4.9190242935E+00   7.1000000000E-01   0.0000000000E+00
+18   1   6.1487803669E+00   1.4200000000E+00   0.0000000000E+00
+19   1   6.1487803669E+00   2.8400000000E+00   0.0000000000E+00
+20   1   4.9190242935E+00   3.5500000000E+00   0.0000000000E+00
+21   1   4.9190242935E+00   4.9700000000E+00   0.0000000000E+00
+22   1   6.1487803669E+00   5.6800000000E+00   0.0000000000E+00
+23   1   6.1487803669E+00   7.1000000000E+00   0.0000000000E+00
+24   1   4.9190242935E+00   7.8100000000E+00   0.0000000000E+00
+0.0000000000E+00   0.0000000000E+00  -1.6750000000E+01
+7.3785364402E+00   0.0000000000E+00   0.0000000000E+00
+0.0000000000E+00   8.5200000000E+00   0.0000000000E+00
+0.0000000000E+00   0.0000000000E+00   1.6750000000E+01
+}
+Driver = {}
+Hamiltonian = DFTB {
+  SCC = Yes
+  SCCTolerance = 1.000000000000000E-010
+  MaxSCCIterations = 1000
+  Mixer = Broyden {
+    MixingParameter = 0.200000000000000
+    InverseJacobiWeight = 1.000000000000000E-002
+    MinimalWeight = 1.00000000000000
+    MaximalWeight = 100000.000000000
+    WeightFactor = 1.000000000000000E-002
+  }
+  MaxAngularMomentum = {
+    C = "p"
+  }
+  Filling = Fermi {
+    Temperature [Kelvin] = 100
+    IndependentKFilling = No
+  }
+  SlaterKosterFiles = Type2FileNames {
+    Separator = "-"
+    Suffix = ".skf"
+    Prefix = ""
+    LowerCaseTypeName = No
+  }
+  KPointsAndWeights = SuperCellFolding {
+4 0 0
+0 4 0
+0 0 1
+0.5 0.5 0.0
+  }
+  Differentiation = FiniteDiff {
+    Delta = 1.000000000000000E-002
+  }
+  PolynomialRepulsive = {}
+  ShellResolvedSCC = No
+  OldSKInterpolation = No
+  RangeSeparated = None {}
+  ReadInitialCharges = No
+  InitialCharges = {}
+  EwaldParameter = 0.00000000000000
+  EwaldTolerance = 1.000000000000000E-009
+  HCorrection = None {}
+  SpinPolarisation = {}
+  ElectricField = {}
+  Solver = RelativelyRobust {}
+  Charge = 0.00000000000000
+  OnSiteCorrection = {}
+  Dispersion = {}
+  Solvation = {}
+  ThirdOrder = No
+  ThirdOrderFull = No
+  ForceEvaluation = "Traditional"
+}
+Options = {
+  WriteAutotestTag = No
+  WriteDetailedOut = No
+  WriteDetailedXML = No
+  WriteResultsTag = No
+  RestartFrequency = 0
+  RandomSeed = 0
+  WriteHS = No
+  WriteRealHS = No
+  MinimiseMemoryUsage = No
+  ShowFoldedCoords = No
+  TimingVerbosity = 1
+  WriteChargesAsText = No
+}
+ParserOptions = {
+  ParserVersion = 8
+  WriteHSDInput = Yes
+  WriteXMLInput = No
+  StopAfterParsing = No
+  IgnoreUnprocessedNodes = No
+}
+Parallel = {
+  UseOmpThreads = Yes
+  Groups = 1
+}
+Analysis = {
+  CalculateForces = Yes
+  ProjectStates = {}
+  WriteEigenvectors = No
+  WriteBandOut = No
+  MullikenAnalysis = No
+  AtomResolvedEnergies = No
+}
+ExcitedState = {}
+Reks = {}
