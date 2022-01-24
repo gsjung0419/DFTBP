@@ -1,0 +1,8 @@
+# Settings that the LAMMPS build will import when this package library is used
+
+# GNU Fortran settings for use with bundled linalg lib
+
+dftbp_SYSINC = 
+dftbp_SYSLIB =  -lm -qopenmp -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -L"location of dftbplus library" -ldftbplus -lifport -lifcoremt -lpthread #without D3
+#dftbp_SYSLIB =  -lm -qopenmp -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -L"location of dftbplus library" -ldftbplus -ldftd3 -lifport -lifcoremt -lpthread #with D3
+dftbp_SYSPATH =# -L../../lib/linalg -fopenmp
