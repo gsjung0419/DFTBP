@@ -1,5 +1,6 @@
 # DFTBP
-LAMMPS codes for DFTB+
+LAMMPS codes for DFTB+.
+
 Please check DFTB+ code https://github.com/dftbplus/dftbplus
 
 This package provides a fix dftbp command which is a wrapper on the
@@ -41,7 +42,14 @@ Until that, you can check the details of changes in https://github.com/gsjung041
  -. Make available with "make yes-dftbp" 
  -. Compile lammps with "make mpi" in src folder (compile with intel compiler + mpich3.2.1)
 
-3. Usage and Example
- -. 
+3 Usage and Example
+ !! Before you are running the simulation. Check OMP_NUM_THREADS= 1 or specified number
+ !! Without specified the number DFTB+ try to use all available cores, making it slow. 
+
+ 1.1 Graphene md (example C-C.skf is MIO)
+  -. data file for lammps and dftb+ should be prepared separately.
+  -. The order of input atoms should be matched.
+  -. Check dftb_in.hsd for options for dftb+. Most options except force calculations, 
+  
 
 
