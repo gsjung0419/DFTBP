@@ -1,7 +1,7 @@
 # DFTBP
 LAMMPS codes for DFTB+
 
-Reference: Jung, Gang Seob, Stephan Irle, and Bobby Sumpter. "Dynamic aspects of graphene deformation and fracture from approximate density functional theory." Carbon (2022)
+Reference: Gang Seob Jung, Stephan Irle, and Bobby Sumpter. "Dynamic aspects of graphene deformation and fracture from approximate density functional theory." Carbon (2022)
 
 Please check DFTB+ code https://github.com/dftbplus/dftbplus
 
