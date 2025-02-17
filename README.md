@@ -12,9 +12,9 @@ GS JUNG@ORNL made this package based on fix_latte.cpp and fix_latte.h (developed
 
 Please report any bug/commetns to jungg@ornl.gov or gs4phone@gmail.com
 
-The necessary functions for DFTB+ API have been implemented (update is allowed by dftb+).
+The necessary functions for DFTB+ API have been implemented (update needs to be allowed by dftb+, please note that this forked version was not merged).
 
-Until that, you can check the details of changes in https://github.com/gsjung0419/dftbplus
+You should use the forked version in https://github.com/gsjung0419/dftbplus, or you should update the API in the recente version of DFTB+ (was not tested). 
 
 0. The code is only tested with following environments.
 
@@ -84,5 +84,118 @@ Until that, you can check the details of changes in https://github.com/gsjung041
   
   -. Check dftb_in.hsd for options for dftb+. Most options are turned off except force calculations
   
+-----------------------------------------------------------------------------------------------------
+Notes from Iker Ortiz de Luzuriaga @ DIPC
+
+Installation in HPC of the DIPC (Donostia International Physics Center).
+
+Software involved:
 
 
+LAMMPS version Stable 29 Oct 2020.
+
+dftbplus, version 20.1.
+
+dftbplus, forked version by the author of DFTBP.
+
+Steps:
+
+Download DFTBP:
+
+ git clone https://github.com/gsjung0419/DFTBP
+
+Download dftbplus:
+
+ wget https://github.com/dftbplus/dftbplus/archive/refs/tags/20.1.tar.gz
+ 
+Download forked dftbplus:
+
+ git clone https://github.com/gsjung0419/dftbplus
+ 
+Download LAMMPS:
+
+ wget https://github.com/lammps/lammps/archive/refs/tags/stable_29Oct2020.tar.gz
+ 
+tar zxvf stable_29Oct2020.tar.gz
+
+Compile original dftbplus with foss/2023a toolchain:
+
+ ml load foss/2023a
+ 
+tar zxvf 20.1.tar.gz
+
+cd 20.1
+
+./utils/get_opt_externals ALL
+
+mkdir _build && cd _build
+
+cmake -DCMAKE_INSTALL_PREFIX=/scratch/$USER/opt/dftb+ -DCMAKE_TOOLCHAIN_FILE=../sys/intel.cmake -DWITH_API=TRUE -DWITH_OMP=TRUE -DBUILD_SHARED_LIBS=TRUE ..
+
+make
+
+make install
+
+This will compile an incomplete version of libdftbplus.so and libmudpack.a, which is required later.
+
+Compile forked dftbplus with intel/2023a:
+
+ ml load intel/2023a
+ 
+cd dftbplus
+
+./utils/get_opt_externals ALL
+
+mkdir _build && cd _build
+
+cmake -DCMAKE_INSTALL_PREFIX=/scratch/$USER/opt/dftb+ -DCMAKE_TOOLCHAIN_FILE=../sys/intel.cmake -DWITH_API=TRUE -DWITH_OMP=TRUE -DBUILD_SHARED_LIBS=TRUE ..
+
+make
+
+make install
+
+This will compile an complete version of libdftbplus.so but no libmudpack.a
+
+Check that you have both files on /scratch/$USER/opt/dftb+
+
+Copy lib/dftbp to LAMMPS_sourcecode/lib:
+
+ cp -R DFTBP/lib/dftbp lammps-stable_29Oct2020/lib/
+
+Copy src to lammps/src/DFTBP
+
+ cp -R DFTBP/src lammps-stable_29Oct2020/src/DFTBP
+
+Enter the LAMMPS directory:
+
+ cd lammps-stable_29Oct2020
+
+Edit Makefile.lammps.mpi in lib/dftbp. It must contain the following (possibly not required) line:
+
+ dftbp_SYSLIB = -L/scratch/cperezmig/opt/dftb+/lib -ldftbplus
+
+Edit Makefile in lammps/src folder;include "dftbp" in PACKAGE.
+
+Install the package:
+
+ make yes-dftbp
+
+Check that the package has been included. Dftbp must appear as YES:
+
+ make package-status
+
+Modify src/MAKE/Makefile.mpi to change compilation and linker flags. Note the gcc and intel flags. We are compiling with both toolchains activated
+
+ CCFLAGS =   -g -O3 -fopenmp
+
+LINKFLAGS =	-g -O3 -fopenmp -lirc -L/scratch/cperezmig/opt/dftb+/lib -ldftbplus -lgfortran -lmpi -lmudpack -L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -lifcore -limf -lsvml -fopenmp
+
+Compile the mpi objective:
+
+ cd src
+
+make mpi
+
+Now you should have two files: lmp_mpi and liblammps_mpi.a. Install them where you want.
+
+...comments from GS: "if possible, just installation of forked version (DFTB+) is recommended"....
