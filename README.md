@@ -1,201 +1,219 @@
 # DFTBP
-LAMMPS codes for DFTB+
 
-Reference: Gang Seob Jung, Stephan Irle, and Bobby Sumpter. "Dynamic aspects of graphene deformation and fracture from approximate density functional theory." Carbon (2022)
+LAMMPS package for running DFTB+-based simulations through a custom
+`fix dftbp` command.
 
-Please check DFTB+ code https://github.com/dftbplus/dftbplus
+This repository adds a LAMMPS fix that wraps the DFTB+ API so that
+molecular dynamics and relaxation can be performed with DFTB+ forces
+inside LAMMPS.
 
-This package provides a fix dftbp command which is a wrapper on the DFTB+ DFTB code, so that molecular dynamics can be run with LAMMPS
-using density-functional tight-binding calculations by DFTB+.
+## Supported Legacy Stack
 
-GS JUNG@ORNL made this package based on fix_latte.cpp and fix_latte.h (developed by LANL)
+This repository should currently be treated as a legacy integration.
 
-Please report any bug/commetns to jungg@ornl.gov or gs4phone@gmail.com
+- Supported LAMMPS version: `29Oct2020`
+- Expected DFTB+ generation: legacy API compatible with the author's
+  fork at <https://github.com/gsjung0419/dftbplus>
+- Reported upstream DFTB+ version in the original notes: `20.1`
 
-The necessary functions for DFTB+ API have been implemented (update needs to be allowed by dftb+, please note that this forked version was not merged).
+If you are using newer LAMMPS or DFTB+ versions, assume that code or API
+porting work will be required. Those combinations should be considered
+unsupported unless they are tested and documented separately.
 
-You should use the forked version in https://github.com/gsjung0419/dftbplus, or you should update the API in the recente version of DFTB+ (was not tested). 
+Version selection happens when cloning or checking out the repository,
+not during the LAMMPS install step. If `main` is maintained as the
+legacy-stable branch, a normal clone is the correct install path.
 
-0. The code is only tested with following environments.
+For repository maintenance guidance, see
+[`MAINTENANCE.md`](MAINTENANCE.md).
 
- -. Intel compiler (19 and 20)
- 
- -. MPICH 3.2.1 version compiled by intel compiler
- 
- -. CMAKE 3.12 or 3.19
- 
- -. Matching the versions of programs are recommended (The author did not check other possible combinations). 
+Reference:
+Gang Seob Jung, Stephan Irle, and Bobby Sumpter,
+"Dynamic aspects of graphene deformation and fracture from approximate
+density functional theory," *Carbon* (2022).
 
+Related projects:
+- Official DFTB+: <https://github.com/dftbplus/dftbplus>
+- Recommended fork for this package:
+  <https://github.com/gsjung0419/dftbplus>
 
-1. DFTB+ options (tested) (See your confg.cmake in dftb+)
+## Status
 
- -. WITH_OMP: TRUE or FALSE
- 
- -. WITH_DFTD3: TRUE or FALSE
- 
- -. WITH_API: TRUE (Mandatory for static library, e.g., library.a)
- 
- -. BUILD_SHARED_LIBS: TURE (Mandatory for shared library, e.g., library.so, mandatory for python-based lammps users)
- 
- -. You may have compile issues if you try with other environments.
+This package was developed by GS Jung at ORNL based on
+`fix_latte.cpp` / `fix_latte.h`.
 
+The author notes that the code was tested with:
+- Intel compiler 19 / 20
+- MPICH 3.2.1 built with Intel compilers
+- CMake 3.12 or 3.19
+- LAMMPS 29 Oct 2020
 
-2.1. Installation of DFTB+ (recommended for the most fundamental version)
+Newer versions of LAMMPS or DFTB+ may require API updates. The author
+specifically notes that the recommended DFTB+ fork contains API changes
+needed by this package and that those changes were not merged upstream
+at the time of writing. In practice, this repository should be read as
+"works with the legacy stack above unless proven otherwise."
 
- -. Compile the dftb+ (WITH_OMP, WITH_API: TRUE)
- 
- -. Check libdftbplus.a is generated.
- 
- -. Locate libdftbplus.a in preffered folder (ex., ~/applic/lib/dftbplus)
+## Repository Layout
 
+- `src/`: LAMMPS package source files (`fix_dftb.cpp`, `fix_dftb.h`,
+  `dftbplus.h`)
+- `lib/dftbp/`: LAMMPS library makefiles and install helper
+- `examples/md/`: graphene MD example input set
 
-2.2. Installation of LAMMPS (recommended for the most fundamental version)
+## Requirements and Current Limitations
 
- -. Use LAMMPS version 29OCT20, the newest version did not work for "fix" based modification.
- 
- -. Copy lib/dftbp to LAMMPS_sourcecode/lib
- 
- -. Edit Makefile.lammps.mpi in lib/dftbp, "location of library" you set in DFTB+ installation (ex., ~/applic/lib/dftbplus).
- 
- -. Move src as lammps/src/DFTBP 
- 
- !! Make sure your dftbplus.h is the same as provided from dftbplus (there might be updates for API functions).
- 
- -. Edit Makefile in lammps/src folder;include "dftbp" in PACKAGE.
- 
- -. Check "make package-status" whether you have DFTBP package
- 
- -. Make available with "make yes-dftbp"
- 
- -. Compile lammps with "make mpi" in src folder (compile with intel compiler + mpich3.2.1)
+Before building or running, keep the following constraints in mind.
 
-3 Usage and Example
+- `fix dftbp` currently works only in serial. The code aborts if
+  LAMMPS is launched with more than one MPI rank.
+- Only `units metal` is supported.
+- The simulation must be 3D.
+- The last argument of `fix dftbp` must currently be `NULL`.
+  Passing a LAMMPS Coulomb potential is not supported.
+- The DFTB+ input file and Slater-Koster files must be available at run
+  time.
+- Set `OMP_NUM_THREADS` explicitly before running. Otherwise DFTB+ may
+  try to use all available cores.
 
- !! Before you are running the simulation. Check OMP_NUM_THREADS= 1 or specify a number
- 
- !! Without specified the OMP number, DFTB+ tries to use all available cores, making it slow.
- 
+For DFTB+, the README originally listed the following tested build
+options:
 
- 3.1 Graphene md (example C-C.skf is MIO)
- 
-  -. data file for lammps and dftb+ should be prepared separately.
-  
-  -. The order of input atoms should be matched.
-  
-  -. Check dftb_in.hsd for options for dftb+. Most options are turned off except force calculations
-  
------------------------------------------------------------------------------------------------------
-Notes from Iker Ortiz de Luzuriaga @ DIPC
+- `WITH_API=TRUE` (required)
+- `WITH_OMP=TRUE` or `FALSE`
+- `WITH_DFTD3=TRUE` or `FALSE`
+- `BUILD_SHARED_LIBS=TRUE`
 
-Installation in HPC of the DIPC (Donostia International Physics Center).
+`BUILD_SHARED_LIBS=TRUE` is especially important if you need a shared
+library build (for example when using Python-based LAMMPS workflows).
 
-Software involved:
+## Building DFTB+
 
+The recommended path is to build the forked DFTB+ version linked above,
+or to manually port the required API updates to a newer upstream DFTB+
+release.
 
-LAMMPS version Stable 29 Oct 2020.
+Typical build steps:
 
-dftbplus, version 20.1.
+1. Configure DFTB+ with API support enabled.
+2. Build and install DFTB+.
+3. Record the directory containing `libdftbplus`.
 
-dftbplus, forked version by the author of DFTBP.
+At minimum, make sure the installed DFTB+ build provides the API library
+needed by this package.
 
-Steps:
+## Installing the Package into LAMMPS
 
-Download DFTBP:
+The original instructions were written for LAMMPS `29Oct2020`. The same
+layout may work for nearby versions, but that has not been verified in
+this repository.
 
- git clone https://github.com/gsjung0419/DFTBP
+1. Copy the library support files into the LAMMPS source tree:
 
-Download dftbplus:
+   ```bash
+   cp -R lib/dftbp /path/to/lammps/lib/
+   ```
 
- wget https://github.com/dftbplus/dftbplus/archive/refs/tags/20.1.tar.gz
- 
-Download forked dftbplus:
+2. Copy this package source into the LAMMPS source tree:
 
- git clone https://github.com/gsjung0419/dftbplus
- 
-Download LAMMPS:
+   ```bash
+   cp -R src /path/to/lammps/src/DFTBP
+   ```
 
- wget https://github.com/lammps/lammps/archive/refs/tags/stable_29Oct2020.tar.gz
- 
-tar zxvf stable_29Oct2020.tar.gz
+3. Edit [`lib/dftbp/Makefile.lammps.mpi`](lib/dftbp/Makefile.lammps.mpi)
+   and point `dftbp_SYSLIB` to your DFTB+ installation, for example:
 
-Compile original dftbplus with foss/2023a toolchain:
+   ```make
+   dftbp_SYSLIB = -L/path/to/dftbplus/lib -ldftbplus
+   ```
 
- ml load foss/2023a
- 
-tar zxvf 20.1.tar.gz
+4. Check that [`src/dftbplus.h`](src/dftbplus.h)
+   matches the DFTB+ API header you built against.
 
-cd 20.1
+5. Enable the package inside LAMMPS:
 
-./utils/get_opt_externals ALL
+   ```bash
+   cd /path/to/lammps/src
+   make yes-dftbp
+   make package-status
+   ```
 
-mkdir _build && cd _build
+6. Build LAMMPS with your preferred target, for example:
 
-cmake -DCMAKE_INSTALL_PREFIX=/scratch/$USER/opt/dftb+ -DCMAKE_TOOLCHAIN_FILE=../sys/intel.cmake -DWITH_API=TRUE -DWITH_OMP=TRUE -DBUILD_SHARED_LIBS=TRUE ..
+   ```bash
+   make mpi
+   ```
 
-make
+The original README recommends building LAMMPS with the same compiler /
+MPI toolchain used for DFTB+.
 
-make install
+## `fix dftbp` Syntax
 
-This will compile an incomplete version of libdftbplus.so and libmudpack.a, which is required later.
+The implemented command form is:
 
-Compile forked dftbplus with intel/2023a:
+```lammps
+fix ID group-ID dftbp dftb_in.hsd NULL
+```
 
- ml load intel/2023a
- 
-cd dftbplus
+Example from [`examples/md/md.in`](examples/md/md.in):
 
-./utils/get_opt_externals ALL
+```lammps
+fix             integ   all nve
+fix             2       all dftbp dftb_in.hsd NULL
+fix_modify      2       energy yes
+fix             therm   all langevin 10.0 10.0 0.1 699483
+```
 
-mkdir _build && cd _build
+Notes:
+- The fourth argument must be the DFTB+ HSD input file.
+- The fifth argument must currently be `NULL`.
+- `fix_modify ... energy yes` is used in the example so the DFTB+
+  contribution is included in the reported energy.
 
-cmake -DCMAKE_INSTALL_PREFIX=/scratch/$USER/opt/dftb+ -DCMAKE_TOOLCHAIN_FILE=../sys/intel.cmake -DWITH_API=TRUE -DWITH_OMP=TRUE -DBUILD_SHARED_LIBS=TRUE ..
+## Example: Graphene MD
 
-make
+The example directory [`examples/md`](examples/md)
+contains:
 
-make install
+- `md.in`: LAMMPS input script
+- `graphene.data`: LAMMPS data file
+- `graphene.gen`: DFTB+ geometry file
+- `dftb_in.hsd`: DFTB+ input
+- `C-C.skf`: Slater-Koster parameter file
 
-This will compile an complete version of libdftbplus.so but no libmudpack.a
+Important:
+- The atom order in `graphene.data` and `graphene.gen` must match.
+- Review `dftb_in.hsd` and update it for your material system and SK
+  files before production use.
 
-Check that you have both files on /scratch/$USER/opt/dftb+
+Suggested run command:
 
-Copy lib/dftbp to LAMMPS_sourcecode/lib:
+```bash
+export OMP_NUM_THREADS=1
+mpirun -np 1 lmp_mpi -in md.in
+```
 
- cp -R DFTBP/lib/dftbp lammps-stable_29Oct2020/lib/
+Use a single MPI rank unless you modify the code to support parallel
+execution.
 
-Copy src to lammps/src/DFTBP
+## Reported HPC Build Notes
 
- cp -R DFTBP/src lammps-stable_29Oct2020/src/DFTBP
+The original README included a user report from Iker Ortiz de Luzuriaga
+at DIPC. The main points were:
 
-Enter the LAMMPS directory:
+- LAMMPS version used: `stable_29Oct2020`
+- DFTB+ version used: `20.1`
+- A forked DFTB+ build was also used
+- On that system, one build provided `libmudpack.a` and the other
+  provided a complete `libdftbplus.so`
+- LAMMPS linker flags were adjusted manually to combine the required
+  libraries
 
- cd lammps-stable_29Oct2020
+If your environment already builds the forked DFTB+ cleanly and exposes
+the needed API library, that is the simpler path.
 
-Edit Makefile.lammps.mpi in lib/dftbp. It must contain the following (possibly not required) line:
+## Contact
 
- dftbp_SYSLIB = -L/scratch/cperezmig/opt/dftb+/lib -ldftbplus
-
-Edit Makefile in lammps/src folder;include "dftbp" in PACKAGE.
-
-Install the package:
-
- make yes-dftbp
-
-Check that the package has been included. Dftbp must appear as YES:
-
- make package-status
-
-Modify src/MAKE/Makefile.mpi to change compilation and linker flags. Note the gcc and intel flags. We are compiling with both toolchains activated
-
- CCFLAGS =   -g -O3 -fopenmp
-
-LINKFLAGS =	-g -O3 -fopenmp -lirc -L/scratch/cperezmig/opt/dftb+/lib -ldftbplus -lgfortran -lmpi -lmudpack -L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -lifcore -limf -lsvml -fopenmp
-
-Compile the mpi objective:
-
- cd src
-
-make mpi
-
-Now you should have two files: lmp_mpi and liblammps_mpi.a. Install them where you want.
-
-...comments from GS: "if possible, just installation of forked version (DFTB+) is recommended"....
+Bug reports and comments can be sent to:
+- `jungg@ornl.gov`
+- `gs4phone@gmail.com`
