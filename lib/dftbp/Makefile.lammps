@@ -1,8 +1,13 @@
-# Settings that the LAMMPS build will import when this package library is used
+# Settings that the LAMMPS make-based build will import when the DFTBP
+# package is enabled with `make yes-dftbp`.
+#
+# These variables are intentionally left blank here. A staging helper
+# script can populate them for a specific DFTB+ installation, or they
+# can be edited manually after copying this package into LAMMPS.
+#
+# Typical values look like:
+# dftbp_SYSLIB = -L/path/to/dftbplus/lib -ldftbplus <extra static-link libs>
 
-# GNU Fortran settings for use with bundled linalg lib
-
-dftbp_SYSINC = 
-dftbp_SYSLIB =  -lm -qopenmp -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -L"location of dftbplus library" -ldftbplus -lifport -lifcoremt -lpthread #without D3
-#dftbp_SYSLIB =  -lm -qopenmp -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -L"location of dftbplus library" -ldftbplus -ldftd3 -lifport -lifcoremt -lpthread #with D3
-dftbp_SYSPATH =# -L../../lib/linalg -fopenmp
+dftbp_SYSINC =
+dftbp_SYSLIB =
+dftbp_SYSPATH =

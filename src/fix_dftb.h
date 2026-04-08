@@ -52,6 +52,7 @@ public:
 protected:
   char *id_pe;
   char *infilename;
+  int implicit_model;
   int coulomb,pbcflag,pe_peratom,virial_global,virial_peratom,neighflag;
   int eflag_caller;
   
@@ -105,11 +106,15 @@ Self-explanatory.  Check the input script syntax and compare to the
 documentation for the command.  You can use -echo screen as a
 command-line option when running LAMMPS to see the offending line.
 
-E: Fix latte does not yet support a LAMMPS calculation of a Coulomb potential
+E: Fix dftbp does not yet support a LAMMPS calculation of a Coulomb potential
 
 UNDOCUMENTED
 
-E: Could not find fix latte compute ID
+E: Could not find fix dftbp compute ID
+
+UNDOCUMENTED
+
+E: Fix dftbp implicit solvent must be off or on
 
 UNDOCUMENTED
 
