@@ -56,13 +56,17 @@ Status as of `2026-04-07`:
 - `src/fix_dftb.cpp` was updated for the current LAMMPS `Fix` API
 - standalone compilation against `lammps-22Jul2025/src` succeeds
 - legacy make-based LAMMPS build compiles the DFTBP package sources
-- CMake-based LAMMPS build now configures and compiles through the DFTBP
-  sources
-- the remaining blocker is final linking against DFTB+ and its Fortran
-  runtime libraries
+- CMake-based LAMMPS build now links successfully against a patched
+  shared DFTB+ `25.1` install
+- the current local executable build reports `DFTBP OPENMP` as installed
+  packages
+- the current shared-library build also produces a working Python-facing
+  `liblammps_mpi.dylib`
 
-So the current issue is no longer a front-end LAMMPS API compile error.
-It is a DFTB+ link configuration problem.
+The main known macOS gap is no longer DFTB+ linking for the shared CMake
+path. The remaining rough edge is the default `install-python` target in
+offline environments, since it tries to refresh Python wheel-build
+dependencies from the network.
 
 ## DFTB+ 25.1 Patch Helper
 
@@ -119,6 +123,36 @@ python3 tools/integrate_lammps_dftbp.py \
 If your LAMMPS build needs extra compiler or MPI settings, pass them
 through with repeated `--cmake-arg`.
 
+## Shared Library and Python Usage
+
+For Python use, there are still two pieces involved:
+
+- the LAMMPS shared library itself
+- the Python `lammps` package that loads that shared library
+
+A Python wheel is only one packaging method for that second piece. It is
+not a different API from the more direct Linux-style workflow where you
+set `PYTHONPATH` and point the dynamic loader at a shared
+`liblammps_*.so`.
+
+Current local results on macOS:
+
+- shared LAMMPS build succeeded with
+  `liblammps_mpi.dylib`
+- Python import and `lammps(name='mpi')` runtime construction succeeded
+- `has_package('DFTBP')` returned `True`
+- the default CMake `install-python` target did not complete in this
+  offline environment because its helper tries to upgrade/install `pip`,
+  `build`, `wheel`, and `setuptools`
+- an offline local wheel build and install did succeed once the shared
+  library was already present
+
+So, in practice:
+
+- on Linux, using the shared library directly remains a normal workflow
+- on macOS, the same idea works; the wheel step is just a convenient way
+  to place the Python files and bundled shared library together
+
 ## Requirements and Current Limitations
 
 Before building or running, keep the following constraints in mind.
@@ -148,6 +182,18 @@ The implemented command form is:
 fix ID group-ID dftbp dftb_in.hsd implicit-model coulomb-compute
 ```
 
+Recommended current form:
+
+```lammps
+fix ID group-ID dftbp dftb_in.hsd off NULL
+```
+
+Optional implicit-GB form:
+
+```lammps
+fix ID group-ID dftbp dftb_in.hsd on NULL
+```
+
 Example from [`examples/md/md.in`](examples/md/md.in):
 
 ```lammps
@@ -167,14 +213,16 @@ Notes:
   zero virial
 - the legacy `NULL` and `GB` tokens are still accepted for backward
   compatibility and map to `off` and `on`
+- the legacy one-extra-argument form is also still accepted when the
+  final token is just `NULL`
 - `fix_modify ... energy yes` includes the DFTB+ contribution in the
   reported energy
 
 ## Next Debug Target
 
-The next step on newer LAMMPS is to make the DFTB+ link step robust
-across compilers and platforms, especially when the DFTB+ install is a
-static library build with additional Fortran runtime dependencies.
+The next step on newer LAMMPS is to make the Python-side installation
+flow more robust across online and offline environments, while keeping
+the shared-library path straightforward for Linux and macOS users.
 
 ## Credits
 

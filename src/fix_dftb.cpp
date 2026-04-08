@@ -85,8 +85,12 @@ FixDFTBP::FixDFTBP(LAMMPS *lmp, int narg, char **arg) :
   virial_global_flag = 1;
   thermo_energy = 1;
   thermo_virial = 1;
-  // store ID of compute pe/atom used to generate Coulomb potential for DFTBP
-  // NULL means DFTBP will compute Coulombic potential
+  // Current syntax:
+  //   fix ID group-ID dftbp dftb_in.hsd implicit-model coulomb-compute
+  // Recommended form:
+  //   fix ... dftbp dftb_in.hsd off NULL
+  // Legacy one-extra-argument input is still accepted for compatibility.
+  // In the current implementation the Coulomb-compute slot must remain NULL.
 
   coulomb = 0;
   implicit_model = DFTBP_IMPLICIT_NONE;

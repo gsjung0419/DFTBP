@@ -84,9 +84,34 @@ DFTB+ companion patch helper:
 - local checks covered script parsing, dry-run against `dftbplus-25.1`,
   and idempotent re-run behavior on a temporary patched tree
 
+Shared-library and Python follow-up:
+
+- patched DFTB+ `25.1` shared install linked successfully into a current
+  CMake LAMMPS build
+- a shared-library LAMMPS build produced both `lmp_mpi` and
+  `liblammps_mpi.dylib`
+- the installed executable reported `DFTBP OPENMP` as enabled packages
+- Python import testing succeeded with the shared library build:
+  `import lammps`, `lammps(name='mpi')`, and `has_package('DFTBP')`
+  all worked
+- the default `install-python` build target did not complete in this
+  offline environment because its helper script attempts to refresh
+  wheel-build requirements from the network
+- an offline local wheel build and local `pip install --target ...`
+  succeeded once `liblammps_mpi.dylib` was already available
+
+Observed conclusion from the shared/Python flow:
+
+- the shared-library route is now a known-good path on the current local
+  test stack
+- Python usage is not fundamentally different from the usual Linux
+  shared-library workflow; the wheel is only a packaging convenience
+- the remaining issue is installer convenience in offline environments,
+  not the Python wrapper ABI itself
+
 ## Next Steps
 
-1. Make DFTB+ link flags robust for static and shared installs
-2. Record a known-good current build recipe once linking succeeds
+1. Document a known-good shared-library and Python recipe for Linux and macOS
+2. Make the Python installation flow work cleanly without network access
 3. Keep the staging script usable for freshly downloaded LAMMPS trees
-4. Add a minimal smoke test after the link step is working
+4. Add a minimal runtime smoke test beyond library import and package detection
