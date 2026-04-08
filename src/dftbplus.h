@@ -5,7 +5,7 @@
 /*  See the LICENSE file for terms of usage and distribution.                                     */
 /*------------------------------------------------------------------------------------------------*/
 #ifndef __DFTBPLUS_H__
-#define __DFTBPLUS_H_
+#define __DFTBPLUS_H__
 
 #ifdef __cplusplus
 extern "C" {

@@ -54,6 +54,11 @@ using namespace FixConst;
 #define DFTBP_ABIVERSION 20180622
 #define INVOKED_PERATOM 8
 
+enum DFTBPImplicitModel {
+  DFTBP_IMPLICIT_NONE = 0,
+  DFTBP_IMPLICIT_GB = 1
+};
+
 /* ---------------------------------------------------------------------- */
 
 FixDFTBP::FixDFTBP(LAMMPS *lmp, int narg, char **arg) :
@@ -65,19 +70,26 @@ FixDFTBP::FixDFTBP(LAMMPS *lmp, int narg, char **arg) :
   if (comm->nprocs != 1)
     error->all(FLERR,"Fix dftbp currently runs only in serial");
 
-  if (narg != 5) error->all(FLERR,"Illegal fix dftbp command");
+  if (narg != 5 && narg != 6)
+    error->all(FLERR,
+               "Illegal fix dftbp command: expected dftb_in.hsd "
+               "[off|on] [NULL|compute-ID]");
 
-  //scalar_flag = 1;
-  //global_freq = 1;
-  //extscalar = 1;
-  virial_flag = 1;
-  thermo_virial = 1;
+  scalar_flag = 1;
+  global_freq = 1;
+  extscalar = 1;
   vector_flag = 1;
   size_vector = 9;
+  extvector = 1;
+  energy_global_flag = 1;
+  virial_global_flag = 1;
+  thermo_energy = 1;
+  thermo_virial = 1;
   // store ID of compute pe/atom used to generate Coulomb potential for DFTBP
   // NULL means DFTBP will compute Coulombic potential
 
   coulomb = 0;
+  implicit_model = DFTBP_IMPLICIT_NONE;
   dftbplus=NULL;
   inputs=NULL;
   id_pe = NULL;
@@ -96,15 +108,40 @@ FixDFTBP::FixDFTBP(LAMMPS *lmp, int narg, char **arg) :
     infilename = new char[n];
     strcpy(infilename,arg[3]);
   }
-  
-  if (strcmp(arg[4],"NULL") != 0) {
+
+  const char *implicit_arg = "NULL";
+  const char *coulomb_arg = "NULL";
+
+  if (narg == 5) {
+    if (strcmp(arg[4],"NULL") == 0 ||
+        strcmp(arg[4],"GB") == 0 ||
+        strcmp(arg[4],"off") == 0 ||
+        strcmp(arg[4],"on") == 0) implicit_arg = arg[4];
+    else coulomb_arg = arg[4];
+  } else {
+    implicit_arg = arg[4];
+    coulomb_arg = arg[5];
+  }
+
+  if (strcmp(implicit_arg,"NULL") == 0 ||
+      strcmp(implicit_arg,"off") == 0) {
+    implicit_model = DFTBP_IMPLICIT_NONE;
+  } else if (strcmp(implicit_arg,"GB") == 0 ||
+             strcmp(implicit_arg,"on") == 0) {
+    implicit_model = DFTBP_IMPLICIT_GB;
+  } else {
+    error->all(FLERR,
+               "Fix dftbp implicit solvent must be off or on");
+  }
+
+  if (strcmp(coulomb_arg,"NULL") != 0) {
     coulomb = 1;
     error->all(FLERR,"Fix dftbp does not yet support a LAMMPS calculation "
                "of a Coulomb potential");
 
-    int n = strlen(arg[4]) + 1;
+    int n = strlen(coulomb_arg) + 1;
     id_pe = new char[n];
-    strcpy(id_pe,arg[4]);
+    strcpy(id_pe,coulomb_arg);
 
     int ipe = modify->find_compute(id_pe);
     if (ipe < 0) error->all(FLERR,"Could not find fix dftbp compute ID");
@@ -162,11 +199,8 @@ FixDFTBP::~FixDFTBP()
 int FixDFTBP::setmask()
 {
   int mask = 0;
-  //mask |= INITIAL_INTEGRATE;
-  //mask |= FINAL_INTEGRATE;
   mask |= PRE_REVERSE;
   mask |= POST_FORCE;
-  mask |= THERMO_ENERGY;  
   mask |= MIN_POST_FORCE;
   return mask;
 }
@@ -334,9 +368,11 @@ void FixDFTBP::post_force(int vflag){
   }
 
   //std::cout<<"DFTB Debug: check point after coordinate set: "<<nAtoms <<std::endl;    
-  //dftbp_set_coords(dftbplus,fcoords);
-
-  dftbp_set_coords_and_lattice_vecs(dftbplus,fcoords,latvecs);  
+  if (implicit_model == DFTBP_IMPLICIT_GB) {
+    dftbp_set_coords(dftbplus,fcoords);
+  } else {
+    dftbp_set_coords_and_lattice_vecs(dftbplus,fcoords,latvecs);
+  }
 
   //std::cout<<"DFTB Debug: check point after coordinate set: "<<std::endl;  
 
@@ -365,13 +401,17 @@ void FixDFTBP::post_force(int vflag){
   //std::cout<<"DFTB Debug: check point after force set: "<<std::endl;    
   //energy update only vflag>1  
   //if(vflag>0){
+  if (implicit_model == DFTBP_IMPLICIT_GB) {
+    for (int i = 0; i < 6; i++) virial[i] = 0.0;
+  } else {
     dftbp_get_virial(dftbplus,fstress);
     virial[0]=fstress[0]*sunitconv;
     virial[1]=fstress[4]*sunitconv;
     virial[2]=fstress[8]*sunitconv;
     virial[3]=0.5*(fstress[1]+fstress[3])*sunitconv;
     virial[4]=0.5*(fstress[2]+fstress[6])*sunitconv;
-    virial[5]=0.5*(fstress[5]+fstress[7])*sunitconv;      
+    virial[5]=0.5*(fstress[5]+fstress[7])*sunitconv;
+  }
     //}
     //std::cout<<"DFTB Debug: check point after virial set: "<<std::endl;    
   return;

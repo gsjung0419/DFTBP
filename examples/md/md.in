@@ -26,7 +26,7 @@ thermo_style 	custom step temp ke pe press pxx pyy pzz xlo xhi ylo yhi
 thermo_modify   norm no flush yes
 
 fix             integ   all nve
-fix             2 all dftbp dftb_in.hsd NULL
+fix             2 all dftbp dftb_in.hsd off NULL
 fix_modify      2 energy yes
 fix             therm   all langevin  10.0 10.0  0.1 699483
 
@@ -41,4 +41,3 @@ unfix		emin
 
 
 run 		100
-

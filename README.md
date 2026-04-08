@@ -3,217 +3,187 @@
 LAMMPS package for running DFTB+-based simulations through a custom
 `fix dftbp` command.
 
+This top-level README is for the current porting effort against newer
+LAMMPS source trees. For the original older stack and manual install
+notes, see [`README.legacy.md`](README.legacy.md).
+
+## Document Split
+
+- [`README.md`](README.md): current porting status, staging script, and
+  known blockers on newer LAMMPS
+- [`README.legacy.md`](README.legacy.md): legacy `29Oct2020`-era usage
+  notes
+- [`PORTING_LOG.md`](PORTING_LOG.md): chronological debug notes
+- [`MAINTENANCE.md`](MAINTENANCE.md): branch and version policy
+
+Version selection happens at `git clone` / `git checkout` time, not
+during the LAMMPS install step.
+
+## Current Scope
+
 This repository adds a LAMMPS fix that wraps the DFTB+ API so that
 molecular dynamics and relaxation can be performed with DFTB+ forces
 inside LAMMPS.
 
-## Supported Legacy Stack
+The current goal on `main` is:
 
-This repository should currently be treated as a legacy integration.
-
-- Supported LAMMPS version: `29Oct2020`
-- Expected DFTB+ generation: legacy API compatible with the author's
-  fork at <https://github.com/gsjung0419/dftbplus>
-- Reported upstream DFTB+ version in the original notes: `20.1`
-
-If you are using newer LAMMPS or DFTB+ versions, assume that code or API
-porting work will be required. Those combinations should be considered
-unsupported unless they are tested and documented separately.
-
-Version selection happens when cloning or checking out the repository,
-not during the LAMMPS install step. If `main` is maintained as the
-legacy-stable branch, a normal clone is the correct install path.
-
-For repository maintenance guidance, see
-[`MAINTENANCE.md`](MAINTENANCE.md).
+- make the package stage cleanly into newer LAMMPS source trees
+- support both legacy make builds and current CMake builds
+- keep porting work separate from the legacy-only usage notes
 
 Reference:
-Gang Seob Jung, Stephan Irle, and Bobby Sumpter,
+Jung, Gang Seob, Stephan Irle, and Bobby G. Sumpter.
 "Dynamic aspects of graphene deformation and fracture from approximate
-density functional theory," *Carbon* (2022).
+density functional theory." *Carbon* 190 (2022): 183-193.
+DOI: [10.1016/j.carbon.2022.01.002](https://doi.org/10.1016/j.carbon.2022.01.002)
+Publisher page:
+[ScienceDirect](https://www.sciencedirect.com/science/article/pii/S0008622322000021)
 
 Related projects:
 - Official DFTB+: <https://github.com/dftbplus/dftbplus>
-- Recommended fork for this package:
+- Recommended legacy fork:
   <https://github.com/gsjung0419/dftbplus>
 
-## Status
+## Current Test Status
 
-This package was developed by GS Jung at ORNL based on
-`fix_latte.cpp` / `fix_latte.h`.
+Latest local smoke-test target:
 
-The author notes that the code was tested with:
-- Intel compiler 19 / 20
-- MPICH 3.2.1 built with Intel compilers
-- CMake 3.12 or 3.19
-- LAMMPS 29 Oct 2020
+- LAMMPS source tree: `22Jul2025`
+- DFTB+ install used for tests: `25.1` with a local MM API patch
 
-Newer versions of LAMMPS or DFTB+ may require API updates. The author
-specifically notes that the recommended DFTB+ fork contains API changes
-needed by this package and that those changes were not merged upstream
-at the time of writing. In practice, this repository should be read as
-"works with the legacy stack above unless proven otherwise."
+Status as of `2026-04-07`:
 
-## Repository Layout
+- `src/fix_dftb.cpp` was updated for the current LAMMPS `Fix` API
+- standalone compilation against `lammps-22Jul2025/src` succeeds
+- legacy make-based LAMMPS build compiles the DFTBP package sources
+- CMake-based LAMMPS build now configures and compiles through the DFTBP
+  sources
+- the remaining blocker is final linking against DFTB+ and its Fortran
+  runtime libraries
 
-- `src/`: LAMMPS package source files (`fix_dftb.cpp`, `fix_dftb.h`,
-  `dftbplus.h`)
-- `lib/dftbp/`: LAMMPS library makefiles and install helper
-- `examples/md/`: graphene MD example input set
+So the current issue is no longer a front-end LAMMPS API compile error.
+It is a DFTB+ link configuration problem.
+
+## DFTB+ 25.1 Patch Helper
+
+If you start from a fresh DFTB+ `25.1` source tree, use the helper under
+[`dftbplus_25patch`](dftbplus_25patch/README.md) before building and
+installing DFTB+.
+
+That helper adds the extra MM API entry points used by this repository:
+
+- `dftbp_get_energyparts`
+- `dftbp_get_virial`
+
+## One-Shot Staging Script
+
+Use [`tools/integrate_lammps_dftbp.py`](tools/integrate_lammps_dftbp.py)
+to copy the package into a LAMMPS source tree and optionally build it.
+
+What it does:
+
+- copies `src/` into `LAMMPS/src/DFTBP`
+- copies `lib/dftbp/` into `LAMMPS/lib/dftbp`
+- installs the package CMake module into `LAMMPS/cmake/Modules/Packages`
+- updates the LAMMPS make and CMake package lists
+- auto-writes `lib/dftbp/Makefile.lammps*` from a DFTB+ install prefix
+- can run either a make-based or CMake-based build
+
+Stage only:
+
+```bash
+python3 tools/integrate_lammps_dftbp.py \
+  --lammps-dir /path/to/lammps \
+  --dftbplus-prefix /path/to/dftbplus-install
+```
+
+Stage and run legacy make build:
+
+```bash
+python3 tools/integrate_lammps_dftbp.py \
+  --lammps-dir /path/to/lammps \
+  --dftbplus-prefix /path/to/dftbplus-install \
+  --build --build-system make --make-target mpi
+```
+
+Stage and run CMake build:
+
+```bash
+python3 tools/integrate_lammps_dftbp.py \
+  --lammps-dir /path/to/lammps \
+  --dftbplus-prefix /path/to/dftbplus-install \
+  --build --build-system cmake \
+  --build-dir /path/to/lammps/_build_dftbp
+```
+
+If your LAMMPS build needs extra compiler or MPI settings, pass them
+through with repeated `--cmake-arg`.
 
 ## Requirements and Current Limitations
 
 Before building or running, keep the following constraints in mind.
 
-- `fix dftbp` currently works only in serial. The code aborts if
-  LAMMPS is launched with more than one MPI rank.
-- Only `units metal` is supported.
-- The simulation must be 3D.
-- The last argument of `fix dftbp` must currently be `NULL`.
-  Passing a LAMMPS Coulomb potential is not supported.
-- The DFTB+ input file and Slater-Koster files must be available at run
-  time.
-- Set `OMP_NUM_THREADS` explicitly before running. Otherwise DFTB+ may
-  try to use all available cores.
+- `fix dftbp` currently works only in serial
+- only `units metal` is supported
+- the simulation must be 3D
+- the recommended `fix dftbp` form is now `dftb_in.hsd off NULL`
+- the optional implicit-GB slot accepts `off` or `on`
+- the last argument must still currently be `NULL`
+- the DFTB+ input file and Slater-Koster files must be available at run
+  time
+- set `OMP_NUM_THREADS` explicitly before running
 
-For DFTB+, the README originally listed the following tested build
-options:
+For DFTB+, the original package notes listed these important options:
 
-- `WITH_API=TRUE` (required)
+- `WITH_API=TRUE`
 - `WITH_OMP=TRUE` or `FALSE`
 - `WITH_DFTD3=TRUE` or `FALSE`
 - `BUILD_SHARED_LIBS=TRUE`
-
-`BUILD_SHARED_LIBS=TRUE` is especially important if you need a shared
-library build (for example when using Python-based LAMMPS workflows).
-
-## Building DFTB+
-
-The recommended path is to build the forked DFTB+ version linked above,
-or to manually port the required API updates to a newer upstream DFTB+
-release.
-
-Typical build steps:
-
-1. Configure DFTB+ with API support enabled.
-2. Build and install DFTB+.
-3. Record the directory containing `libdftbplus`.
-
-At minimum, make sure the installed DFTB+ build provides the API library
-needed by this package.
-
-## Installing the Package into LAMMPS
-
-The original instructions were written for LAMMPS `29Oct2020`. The same
-layout may work for nearby versions, but that has not been verified in
-this repository.
-
-1. Copy the library support files into the LAMMPS source tree:
-
-   ```bash
-   cp -R lib/dftbp /path/to/lammps/lib/
-   ```
-
-2. Copy this package source into the LAMMPS source tree:
-
-   ```bash
-   cp -R src /path/to/lammps/src/DFTBP
-   ```
-
-3. Edit [`lib/dftbp/Makefile.lammps.mpi`](lib/dftbp/Makefile.lammps.mpi)
-   and point `dftbp_SYSLIB` to your DFTB+ installation, for example:
-
-   ```make
-   dftbp_SYSLIB = -L/path/to/dftbplus/lib -ldftbplus
-   ```
-
-4. Check that [`src/dftbplus.h`](src/dftbplus.h)
-   matches the DFTB+ API header you built against.
-
-5. Enable the package inside LAMMPS:
-
-   ```bash
-   cd /path/to/lammps/src
-   make yes-dftbp
-   make package-status
-   ```
-
-6. Build LAMMPS with your preferred target, for example:
-
-   ```bash
-   make mpi
-   ```
-
-The original README recommends building LAMMPS with the same compiler /
-MPI toolchain used for DFTB+.
 
 ## `fix dftbp` Syntax
 
 The implemented command form is:
 
 ```lammps
-fix ID group-ID dftbp dftb_in.hsd NULL
+fix ID group-ID dftbp dftb_in.hsd implicit-model coulomb-compute
 ```
 
 Example from [`examples/md/md.in`](examples/md/md.in):
 
 ```lammps
 fix             integ   all nve
-fix             2       all dftbp dftb_in.hsd NULL
+fix             2       all dftbp dftb_in.hsd off NULL
 fix_modify      2       energy yes
 fix             therm   all langevin 10.0 10.0 0.1 699483
 ```
 
 Notes:
-- The fourth argument must be the DFTB+ HSD input file.
-- The fifth argument must currently be `NULL`.
-- `fix_modify ... energy yes` is used in the example so the DFTB+
-  contribution is included in the reported energy.
 
-## Example: Graphene MD
+- the fourth argument must be the DFTB+ HSD input file
+- the fifth argument toggles implicit GB mode: `off` or `on`
+- the sixth argument is reserved for a LAMMPS Coulomb compute ID and
+  must currently be `NULL`
+- with `on`, DFTBP uses the coordinate-only update path and reports a
+  zero virial
+- the legacy `NULL` and `GB` tokens are still accepted for backward
+  compatibility and map to `off` and `on`
+- `fix_modify ... energy yes` includes the DFTB+ contribution in the
+  reported energy
 
-The example directory [`examples/md`](examples/md)
-contains:
+## Next Debug Target
 
-- `md.in`: LAMMPS input script
-- `graphene.data`: LAMMPS data file
-- `graphene.gen`: DFTB+ geometry file
-- `dftb_in.hsd`: DFTB+ input
-- `C-C.skf`: Slater-Koster parameter file
+The next step on newer LAMMPS is to make the DFTB+ link step robust
+across compilers and platforms, especially when the DFTB+ install is a
+static library build with additional Fortran runtime dependencies.
 
-Important:
-- The atom order in `graphene.data` and `graphene.gen` must match.
-- Review `dftb_in.hsd` and update it for your material system and SK
-  files before production use.
+## Credits
 
-Suggested run command:
-
-```bash
-export OMP_NUM_THREADS=1
-mpirun -np 1 lmp_mpi -in md.in
-```
-
-Use a single MPI rank unless you modify the code to support parallel
-execution.
-
-## Reported HPC Build Notes
-
-The original README included a user report from Iker Ortiz de Luzuriaga
-at DIPC. The main points were:
-
-- LAMMPS version used: `stable_29Oct2020`
-- DFTB+ version used: `20.1`
-- A forked DFTB+ build was also used
-- On that system, one build provided `libmudpack.a` and the other
-  provided a complete `libdftbplus.so`
-- LAMMPS linker flags were adjusted manually to combine the required
-  libraries
-
-If your environment already builds the forked DFTB+ cleanly and exposes
-the needed API library, that is the simpler path.
+Environment setup and installation simplification were completed with
+OpenAI Codex.
 
 ## Contact
 
 Bug reports and comments can be sent to:
+
 - `jungg@ornl.gov`
 - `gs4phone@gmail.com`

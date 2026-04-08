@@ -52,6 +52,7 @@ public:
 protected:
   char *id_pe;
   char *infilename;
+  int implicit_model;
   int coulomb,pbcflag,pe_peratom,virial_global,virial_peratom,neighflag;
   int eflag_caller;
   

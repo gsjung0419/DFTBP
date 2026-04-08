@@ -1,7 +1,9 @@
 # Maintenance Guide
 
-This repository is best maintained as a legacy package tied to an older
-LAMMPS / DFTB+ combination.
+This repository now has two separate documentation tracks:
+
+- `main`: current porting work for newer LAMMPS
+- `legacy/lammps-29Oct2020`: frozen legacy baseline
 
 ## Recommended Version Policy
 
@@ -17,35 +19,28 @@ instead of silently broadening compatibility claims.
 
 ## Recommended Branch Strategy
 
-If this repository will remain legacy-only for now, the simplest option
-is:
+Use the following split:
 
-- Keep `main` as the stable legacy branch
-- Make only bug fixes or documentation updates on `main`
-- Tag known-good snapshots
+- `main`: latest porting work and reusable install automation
+- `legacy/lammps-29Oct2020`: frozen maintenance branch for the old stack
+- tags: known-good snapshots on either branch
 
 Suggested tag style:
 
 - `legacy-lammps29Oct2020-dftbplus20.1-v1`
-- `legacy-lammps29Oct2020-dftbplus20.1-v2`
+- `port-lammps22Jul2025-dftbplus25.1-v1`
 
-If you plan to attempt a port to newer LAMMPS or newer DFTB+, use this
-split instead:
-
-- `main`: future porting work
-- `legacy/lammps-29Oct2020`: frozen maintenance branch for the old stack
-
-That avoids mixing compatibility fixes for the old code with API porting
-changes for newer versions.
+This keeps the older verified stack readable while allowing `main` to
+move toward newer LAMMPS releases.
 
 ## How Users Should Install It
 
 Version selection should happen at clone / checkout time, not during the
 LAMMPS install step.
 
-- If `main` is the legacy-stable branch, a normal clone is enough.
-- If a separate legacy branch exists later, users should clone that
-  branch or check out the legacy tag first.
+- If a user wants the current porting branch, a normal clone is enough.
+- If a user wants the old verified stack, they should clone the legacy
+  branch or check out a legacy tag first.
 - The LAMMPS install step itself does not choose between legacy and
   modern code paths in this repository.
 
@@ -55,7 +50,7 @@ Examples:
 git clone git@github.com:gsjung0419/DFTBP.git
 ```
 
-If you later split branches:
+If you want the legacy branch directly:
 
 ```bash
 git clone -b legacy/lammps-29Oct2020 git@github.com:gsjung0419/DFTBP.git
@@ -71,9 +66,11 @@ git checkout legacy-lammps29Oct2020-dftbplus20.1-v1
 
 ## Recommended Documentation Practice
 
-Keep version information in two places:
+Keep version information in four places:
 
-- [`README.md`](README.md): one short "Supported Legacy Stack" section
+- [`README.md`](README.md): current porting status and install flow
+- [`README.legacy.md`](README.legacy.md): old-stack usage notes
+- [`PORTING_LOG.md`](PORTING_LOG.md): chronological debug notes
 - this file: maintenance policy and branch/tag rules
 
 When you verify a working environment, record:
@@ -86,12 +83,10 @@ When you verify a working environment, record:
 
 ## Practical Advice
 
-If your real goal is only to preserve the currently working code, do not
-start with a new porting branch yet. Instead:
+If you verify a new current stack, record:
 
-1. Keep `main` as legacy-stable.
-2. Add a tag to the last known-good state.
-3. Only create a separate modernization branch when you are ready to
-   test newer LAMMPS or DFTB+ APIs.
-
-That is usually the lowest-maintenance setup.
+1. exact LAMMPS version
+2. exact DFTB+ release or commit
+3. whether the DFTB+ library was static or shared
+4. compiler / MPI / Fortran runtime details
+5. whether `fix dftbp` remained serial-only
