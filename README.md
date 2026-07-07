@@ -51,22 +51,38 @@ Latest local smoke-test target:
 - LAMMPS source tree: `22Jul2025`
 - DFTB+ install used for tests: `25.1` with a local MM API patch
 
-Status as of `2026-04-07`:
+Current repository folder: `DFTBP`.
+
+GitHub remote: `git@github.com:gsjung0419/DFTBP.git`.
+
+Status as of `2026-07-07`:
 
 - `src/fix_dftb.cpp` was updated for the current LAMMPS `Fix` API
 - standalone compilation against `lammps-22Jul2025/src` succeeds
 - legacy make-based LAMMPS build compiles the DFTBP package sources
 - CMake-based LAMMPS build now links successfully against a patched
   shared DFTB+ `25.1` install
-- the current local executable build reports `DFTBP OPENMP` as installed
-  packages
+- the current local executable build reports `DFTBP` together with the shared
+  stack packages used by `lmp_packages`: `COLVARS`, `PYTHON`, `KSPACE`,
+  `MOLECULE`, `EXTRA-FIX`, `EXTRA-MOLECULE`, and `EXTRA-PAIR`
 - the current shared-library build also produces a working Python-facing
-  `liblammps_mpi.dylib`
+  `liblammps` loaded by the Python `lammps` package
+- the shared stack has been smoke-tested from both the LAMMPS command line and
+  Python API
 
 The main known macOS gap is no longer DFTB+ linking for the shared CMake
 path. The remaining rough edge is the default `install-python` target in
 offline environments, since it tries to refresh Python wheel-build
 dependencies from the network.
+
+The common current build notes live in:
+
+```text
+/Users/gsjung/ModelingAgent/lmp_packages/installation.md
+```
+
+That document records the working LAMMPS 22Jul2025 build with DFTBP, COLVARS,
+PYTHON, LMPTorch, and LMPANI/TorchANI smoke tests.
 
 ## DFTB+ 25.1 Patch Helper
 
