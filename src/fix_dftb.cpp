@@ -372,7 +372,7 @@ void FixDFTBP::post_force(int vflag){
   }
 
   //std::cout<<"DFTB Debug: check point after coordinate set: "<<nAtoms <<std::endl;    
-  if (implicit_model == DFTBP_IMPLICIT_GB) {
+  if (!pbcflag || implicit_model == DFTBP_IMPLICIT_GB) {
     dftbp_set_coords(dftbplus,fcoords);
   } else {
     dftbp_set_coords_and_lattice_vecs(dftbplus,fcoords,latvecs);
@@ -405,7 +405,7 @@ void FixDFTBP::post_force(int vflag){
   //std::cout<<"DFTB Debug: check point after force set: "<<std::endl;    
   //energy update only vflag>1  
   //if(vflag>0){
-  if (implicit_model == DFTBP_IMPLICIT_GB) {
+  if (!pbcflag || implicit_model == DFTBP_IMPLICIT_GB) {
     for (int i = 0; i < 6; i++) virial[i] = 0.0;
   } else {
     dftbp_get_virial(dftbplus,fstress);
